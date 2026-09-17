@@ -1,0 +1,43 @@
+name: CapabilityProbe
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  network:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm view express version
+      - run: node --version
+
+  artifact-and-release:
+    needs: network
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: mkdir -p dist && echo probe-ok > dist/probe.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: probe-dist
+          path: dist/probe.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: probe-dist
+          path: downloaded
+      - run: cat downloaded/probe.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: probe-v1
+          name: Probe Release
+          body: |
+            Release Notes
+
+            Changelog probe.
+          files: downloaded/probe.txt
